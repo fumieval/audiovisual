@@ -37,8 +37,9 @@ library
   build-depends:       base >= 4.7 && <5
     , template-haskell
     , linear
-    , objective
-    , minioperational
+    , objective >= 1 && <1.1
+    , extensible >= 0.2.7
+    , free >= 4.8 && <5
     , deepseq
     , mtl
     , filepath
