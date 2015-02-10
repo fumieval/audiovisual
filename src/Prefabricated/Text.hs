@@ -23,7 +23,7 @@ type Console = League '[(,) Char, (->) Picture]
 
 typewriter :: MonadIO m => Float -> (Char -> m (Bitmap, V2 Float, V2 Float))
   -> Object Console m
-typewriter l req = stateful (match (go <?~~ uses _2 <?~~ Nil) . getLeague) (V2 0 0, mempty) where
+typewriter l req = stateful (match (go <?!$ uses _2 <?!$ Nil) . getLeague) (V2 0 0, mempty) where
   go ('\3', cont) = do
     put (V2 0 0, mempty)
     return cont
