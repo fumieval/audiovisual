@@ -18,30 +18,31 @@
 -- The deck for a single stream
 --
 -----------------------------------------------------------------------------
-module Prefabricated.Deck (Deck(..), empty, source, pos, playing, playback) where
+module Audiovisual.Deck (Deck(..), empty, source, pos, playing, playback) where
 import Control.Lens
 import Control.Monad.State.Strict
 import Data.Audio
+import Foreign.Storable
 import qualified Data.Vector.Storable as V
 
-data Deck = Deck
-  { _src :: Source Stereo
+data Deck a = Deck
+  { _src :: Source a
   , _pos :: !Time
   , _playing :: !Bool }
 
-empty :: Deck
+empty :: Num a => Deck a
 empty = Deck (Source $ const 0) 0 False
 
-source :: Lens' Deck (Source Stereo)
+source :: Lens' (Deck a) (Source a)
 source f s = f (_src s) <&> \a -> s { _src = a }
 
-pos :: Lens' Deck Time
+pos :: Lens' (Deck a) Time
 pos f s = f (_pos s) <&> \a -> s { _pos = a }
 
-playing :: Lens' Deck Bool
+playing :: Lens' (Deck a) Bool
 playing f s = f (_playing s) <&> \a -> s { _playing = a }
 
-playback :: MonadState Deck m => Time -> Int -> m (V.Vector Stereo)
+playback :: (Num a, Storable a, MonadState (Deck a) m) => Time -> Int -> m (V.Vector a)
 playback dt n = do
   Source s <- use source
   pl <- use playing

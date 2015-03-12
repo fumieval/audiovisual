@@ -22,6 +22,7 @@ module Data.Graphics.Bitmap (
   ,bbox
   ,readFile
   ,writeFile
+  ,loadBitmapsWith
   ) where
 
 

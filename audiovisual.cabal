@@ -25,21 +25,22 @@ library
     Data.Audio
     Data.Graphics
     Data.Graphics.Bitmap
+    Data.Graphics.Sight
     Data.Graphics.Class
     Data.Graphics.Font
-    Data.Graphics.Scene
-    Data.Graphics.Sight
     Data.Graphics.Vertex
     Data.Input.Event
-    Prefabricated.Sampler
-    Prefabricated.Deck
-    Prefabricated.Text
+    Audiovisual.Sampler
+    Audiovisual.Deck
+    Audiovisual.Text
+  other-modules:
+    Paths_audiovisual
   build-depends:       base >= 4.7 && <5
     , template-haskell
     , linear
     , objective >= 1 && <1.1
-    , extensible >= 0.2.7
     , free >= 4.8 && <5
+    , colors
     , deepseq
     , mtl
     , filepath
@@ -52,6 +53,7 @@ library
     , JuicyPixels
     , vector
     , lens
+    , void
     , transformers
     , WAVE
   hs-source-dirs:      src
