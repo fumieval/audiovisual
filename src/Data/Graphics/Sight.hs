@@ -73,7 +73,7 @@ data VFX r = SphericalAdd B.Bitmap r
   | Diffuse (V4 Float) r
 --  | Specular (V3 Float) r
 --  | Ambient (V3 Float) r
---  | NormalMap Bitmap r
+  | NormalMap B.Bitmap r
   | EmbedIO (IO r)
   deriving Functor
 

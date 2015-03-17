@@ -33,7 +33,7 @@ instance Storable Vertex where
     poke (castPtr ptr `plusPtr` align2) n
 
 positionUV :: Vec3 -> Vec2 -> Vertex
-positionUV v p = Vertex v p zero
+positionUV v p = Vertex v p (V3 0 0 1)
 
 positionOnly :: Vec3 -> Vertex
-positionOnly v = Vertex v zero zero
+positionOnly v = Vertex v zero (V3 0 0 1)
