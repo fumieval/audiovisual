@@ -13,7 +13,8 @@ category:            Data, Records
 build-type:          Simple
 stability:           provisional
 
-extra-source-files:
+extra-source-files: data/*.ttf
+data-files: data/*.ttf
 cabal-version:       >=1.10
 
 source-repository head

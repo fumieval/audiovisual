@@ -52,7 +52,7 @@ data Font = Font FT_Face (Float, Float) (Box V2 Float)
 
 defaultFont :: Font
 defaultFont = unsafePerformIO $ do
-  path <- getDataFileName "data/VL-PGothic-Regular.ttf"
+  path <- getDataFileName "data/Yasashisa-Gothic.ttf"
   readFont path
 
 -- | Create a 'Font' from the given file.
