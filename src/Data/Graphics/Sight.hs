@@ -86,7 +86,7 @@ instance Affine Scene where
     (V4 0 y 0 0)
     (V4 0 0 z 0)
     (V4 0 0 0 1)
-  translate v = transformScene $ translation .~ v $ eye4
+  translate v = transformScene $ translation .~ v $ identity
 
 instance Figure Scene where
   primitive m vs = Scene $ \_ _ f _ _ -> f B.Blank m (V.fromList $ map positionOnly vs)
@@ -123,7 +123,7 @@ instance Affine Picture where
   type Normal Picture = Float
   rotateOn t (Picture s) = Picture (transformScene m s) where
     m = V4 (V4 (cos t) (-sin t) 0 0) (V4 (sin t) (cos t) 0 0) (V4 0 0 1 0) (V4 0 0 0 1)
-  translate (V2 x y) (Picture s) = Picture $ transformScene (translation .~ V3 x y 0 $ eye4) s
+  translate (V2 x y) (Picture s) = Picture $ transformScene (translation .~ V3 x y 0 $ identity) s
   scale (V2 x y) (Picture s) = Picture (transformScene m s) where
     m = V4 (V4 x 0 0 0) (V4 0 y 0 0) (V4 0 0 1 0) (V4 0 0 0 1)
 

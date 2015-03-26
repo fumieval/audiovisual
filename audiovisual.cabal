@@ -38,7 +38,7 @@ library
     Paths_audiovisual
   build-depends:       base >= 4.7 && <5
     , template-haskell
-    , linear
+    , linear >= 1.18
     , objective >= 1 && <1.1
     , free >= 4.8 && <5
     , colors
