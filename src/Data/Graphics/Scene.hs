@@ -8,6 +8,7 @@ module Data.Graphics.Scene
   , drawPrimitive
   , applyMatrix
   , vertices
+  , foggy
   , embedIO
   , Scene(..)
   -- * Picture
@@ -44,13 +45,17 @@ instance Affine (Rendering s) where
   type Vec (Rendering s) = V3 Float
   type Normal (Rendering s) = V3 Float
   rotateOn v = applyMatrix (m33_to_m44 $ fromQuaternion $ axisAngle v (norm v))
+  {-# INLINE rotateOn #-}
   scale (V3 x y z) = applyMatrix (scaled (V4 x y z 1))
+  {-# INLINE scale #-}
   translate v = applyMatrix (set translation v identity)
   {-# INLINE translate #-}
 
 instance Monoid (Rendering s) where
-  mempty = Rendering $ mempty
+  mempty = Rendering mempty
+  {-# INLINE mempty #-}
   mappend (Rendering a) (Rendering b) = Rendering (mappend a b)
+  {-# INLINE mappend #-}
 
 newtype Scene = Scene { unScene :: forall s. Rendering s }
 
@@ -72,16 +77,19 @@ applyMatrix m = vfx . ApplyMatrix m
 
 vertices :: B.Bitmap -> PrimitiveMode -> V.Vector Vertex -> Rendering s
 vertices b m v = withVertices v $ drawPrimitive b m
+{-# INLINE vertices #-}
 
 embedIO :: IO (Rendering s) -> Rendering s
 embedIO = vfx . EmbedIO
 
-data VFX s r = WithVertices (V.Vector Vertex) (s -> r)
-  | DrawPrimitive B.Bitmap PrimitiveMode s
-  | ApplyMatrix (M44 Float) r
-  | SphericalAdd B.Bitmap r
-  | SphericalMultiply B.Bitmap r
-  | Diffuse (V4 Float) r
+foggy :: Float -> V4 Float -> Rendering s -> Rendering s
+foggy d col = vfx . Foggy d col
+
+data VFX s r = DrawPrimitive !B.Bitmap !PrimitiveMode !s
+  | ApplyMatrix !(M44 Float) r
+  | Diffuse !(V4 Float) r
+  | WithVertices !(V.Vector Vertex) (s -> r)
+  | Foggy !Float !(V4 Float) r
   | EmbedIO (IO r)
   deriving Functor
 
@@ -107,7 +115,9 @@ unit_circle n = map angle [0,2*pi/fromIntegral n..2*pi]
 
 instance Monoid Scene where
   mempty = Scene mempty
+  {-# INLINE mempty #-}
   mappend (Scene x) (Scene y) = Scene (mappend x y)
+  {-# INLINE mappend #-}
 
 v2ToV3 :: Num a => V2 a -> V3 a
 v2ToV3 (V2 x y) = V3 x y 0
