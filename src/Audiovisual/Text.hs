@@ -3,7 +3,8 @@ module Audiovisual.Text (renderer, Typewriting(..), typewriter, putStr, clear, s
 import Prelude hiding (putStr)
 import Data.Graphics.Bitmap (Bitmap(..))
 import Data.Graphics.Font
-import Data.Graphics.Sight
+import Data.Graphics.Class
+import Data.Graphics.Scene
 import Control.Lens hiding (simple)
 import Control.Monad.Free
 import Control.Monad.State.Class
@@ -48,8 +49,8 @@ simple :: MonadIO m => Font -> Float -> m (String -> Picture)
 simple font size = liftIO $ do
   r <- new $ renderer font size
   t <- new $ typewriter (size * 1.2) ((r.-) . request)
-  return $ \s -> Picture $ applyVFX $ EmbedIO $ do
+  return $ \s -> Picture $ Scene $ embedIO $ do
     t .- putStr s
     p <- t .- liftF (Render id)
     t .- clear
-    return $! unPicture p
+    return $! unScene $! unPicture p

@@ -22,15 +22,19 @@ align2 = align1 + sizeOf (vUV undefined)
 
 instance Storable Vertex where
   sizeOf _ = sizeOf (undefined :: Vec3) + sizeOf (undefined :: Vec2) + sizeOf (undefined :: Vec3)
+  {-# INLINE sizeOf #-}
   alignment _ = 0
+  {-# INLINE alignment #-}
   peek ptr = Vertex
     <$> peek (castPtr ptr)
     <*> peek (castPtr $ ptr `plusPtr` align1)
     <*> peek (castPtr $ ptr `plusPtr` align2)
+  {-# INLINE peek #-}
   poke ptr (Vertex v t n) = do
     poke (castPtr ptr) v
     poke (castPtr ptr `plusPtr` align1) t
     poke (castPtr ptr `plusPtr` align2) n
+  {-# INLINE poke #-}
 
 positionUV :: Vec3 -> Vec2 -> Vertex
 positionUV v p = Vertex v p (V3 0 0 1)
