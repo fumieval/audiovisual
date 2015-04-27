@@ -48,7 +48,7 @@ instance Affine (Rendering s) where
   {-# INLINE rotateOn #-}
   scale (V3 x y z) = applyMatrix (scaled (V4 x y z 1))
   {-# INLINE scale #-}
-  translate v = applyMatrix (set translation v identity)
+  translate (V3 x y z) = applyMatrix $ V4 (V4 1 0 0 x) (V4 0 1 0 y) (V4 0 0 1 z) (V4 0 0 0 1)
   {-# INLINE translate #-}
 
 instance Monoid (Rendering s) where
@@ -63,12 +63,12 @@ vfx :: VFX s (Rendering s) -> Rendering s
 vfx v = Rendering $ \t -> t (fmap (`runRendering` t) v)
 {-# INLINE vfx #-}
 
-withVertices :: V.Vector Vertex -> (s -> Rendering s) -> Rendering s
-withVertices v c = vfx $ WithVertices v c
+withVertices :: PrimitiveMode -> V.Vector Vertex -> (s -> Rendering s) -> Rendering s
+withVertices m v c = vfx $ WithVertices m v c
 {-# INLINE withVertices #-}
 
-drawPrimitive :: B.Bitmap -> PrimitiveMode -> s -> Rendering s
-drawPrimitive b m = vfx . DrawPrimitive b m
+drawPrimitive :: B.Bitmap -> s -> Rendering s
+drawPrimitive b = vfx . DrawPrimitive b
 {-# INLINE drawPrimitive #-}
 
 applyMatrix :: M44 Float -> Rendering s -> Rendering s
@@ -76,7 +76,7 @@ applyMatrix m = vfx . ApplyMatrix m
 {-# INLINE applyMatrix #-}
 
 vertices :: B.Bitmap -> PrimitiveMode -> V.Vector Vertex -> Rendering s
-vertices b m v = withVertices v $ drawPrimitive b m
+vertices b m v = withVertices m v $ drawPrimitive b
 {-# INLINE vertices #-}
 
 embedIO :: IO (Rendering s) -> Rendering s
@@ -85,10 +85,10 @@ embedIO = vfx . EmbedIO
 foggy :: Float -> V4 Float -> Rendering s -> Rendering s
 foggy d col = vfx . Foggy d col
 
-data VFX s r = DrawPrimitive !B.Bitmap !PrimitiveMode !s
+data VFX s r = DrawPrimitive !B.Bitmap !s
   | ApplyMatrix !(M44 Float) r
   | Diffuse !(V4 Float) r
-  | WithVertices !(V.Vector Vertex) (s -> r)
+  | WithVertices !PrimitiveMode !(V.Vector Vertex) (s -> r)
   | Foggy !Float !(V4 Float) r
   | EmbedIO (IO r)
   deriving Functor
