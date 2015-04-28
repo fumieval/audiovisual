@@ -2,6 +2,7 @@
 module Data.Graphics.Scene
   ( -- * Scene
    Rendering(..)
+  , Intensive(..)
   , VFX(..)
   , vfx
   , withVertices
@@ -24,6 +25,7 @@ import qualified Data.Vector.Storable as V
 import Control.Lens
 import Data.Graphics.Class
 import Data.Graphics.Vertex
+import qualified Codec.Picture as C
 
 bitmap :: B.Bitmap -> Picture
 bitmap bmp = Picture $ Scene $ vertices bmp TriangleStrip vx
@@ -39,7 +41,44 @@ toward n@((^/norm n) -> V3 x y z) (Picture (Scene s)) = Scene $ applyMatrix
   (m33_to_m44 $ fromQuaternion $ axisAngle (V3 (-y) x 0) $ acos $ z / norm n)
   s
 
-newtype Rendering s = Rendering { runRendering :: forall r. Monoid r => (VFX s r -> r) -> r }
+newtype Rendering s = Rendering { runRendering :: forall r. Monoid r => Intensive s r -> (VFX s r -> r) -> r }
+
+data Intensive s r = Intensive !(C.Image C.PixelRGBA8 -> Int -> s -> r) !(s -> r) !(M44 Float -> r -> r)
+
+data VFX s r = Diffuse !(V4 Float) r
+  | WithVertices !PrimitiveMode !(V.Vector Vertex) (s -> r)
+  | Foggy !Float !(V4 Float) r
+  | EmbedIO (IO r)
+  deriving Functor
+
+newtype Scene = Scene { unScene :: forall s. Rendering s }
+
+vfx :: VFX s (Rendering s) -> Rendering s
+vfx v = Rendering $ \i t -> t (fmap (\r -> runRendering r i t) v)
+{-# INLINE vfx #-}
+
+withVertices :: PrimitiveMode -> V.Vector Vertex -> (s -> Rendering s) -> Rendering s
+withVertices m v c = vfx $ WithVertices m v c
+{-# INLINE withVertices #-}
+
+drawPrimitive :: B.Bitmap -> s -> Rendering s
+drawPrimitive (B.Bitmap b _ h) = \s -> Rendering $ \(Intensive f _ _) _ -> f b h s
+drawPrimitive B.Blank = \s -> Rendering $ \(Intensive _ g _) _ -> g s
+{-# INLINE drawPrimitive #-}
+
+applyMatrix :: M44 Float -> Rendering s -> Rendering s
+applyMatrix m r = Rendering $ \i@(Intensive _ _ k) v -> k m (runRendering r i v)
+{-# INLINE applyMatrix #-}
+
+vertices :: B.Bitmap -> PrimitiveMode -> V.Vector Vertex -> Rendering s
+vertices b m v = withVertices m v $ drawPrimitive b
+{-# INLINE vertices #-}
+
+embedIO :: IO (Rendering s) -> Rendering s
+embedIO = vfx . EmbedIO
+
+foggy :: Float -> V4 Float -> Rendering s -> Rendering s
+foggy d col = vfx . Foggy d col
 
 instance Affine (Rendering s) where
   type Vec (Rendering s) = V3 Float
@@ -56,42 +95,6 @@ instance Monoid (Rendering s) where
   {-# INLINE mempty #-}
   mappend (Rendering a) (Rendering b) = Rendering (mappend a b)
   {-# INLINE mappend #-}
-
-newtype Scene = Scene { unScene :: forall s. Rendering s }
-
-vfx :: VFX s (Rendering s) -> Rendering s
-vfx v = Rendering $ \t -> t (fmap (`runRendering` t) v)
-{-# INLINE vfx #-}
-
-withVertices :: PrimitiveMode -> V.Vector Vertex -> (s -> Rendering s) -> Rendering s
-withVertices m v c = vfx $ WithVertices m v c
-{-# INLINE withVertices #-}
-
-drawPrimitive :: B.Bitmap -> s -> Rendering s
-drawPrimitive b = vfx . DrawPrimitive b
-{-# INLINE drawPrimitive #-}
-
-applyMatrix :: M44 Float -> Rendering s -> Rendering s
-applyMatrix m = vfx . ApplyMatrix m
-{-# INLINE applyMatrix #-}
-
-vertices :: B.Bitmap -> PrimitiveMode -> V.Vector Vertex -> Rendering s
-vertices b m v = withVertices m v $ drawPrimitive b
-{-# INLINE vertices #-}
-
-embedIO :: IO (Rendering s) -> Rendering s
-embedIO = vfx . EmbedIO
-
-foggy :: Float -> V4 Float -> Rendering s -> Rendering s
-foggy d col = vfx . Foggy d col
-
-data VFX s r = DrawPrimitive !B.Bitmap !s
-  | ApplyMatrix !(M44 Float) r
-  | Diffuse !(V4 Float) r
-  | WithVertices !PrimitiveMode !(V.Vector Vertex) (s -> r)
-  | Foggy !Float !(V4 Float) r
-  | EmbedIO (IO r)
-  deriving Functor
 
 instance Affine Scene where
   type Vec Scene = V3 Float
